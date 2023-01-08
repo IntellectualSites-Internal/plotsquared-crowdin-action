@@ -1,0 +1,20 @@
+name: Publish Release Draft
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install jq
+        run: sudo apt-get install -y jq
+      - name: Get latest draft
+        run: |
+          DRAFT_NUMBER=$(curl -s https://api.github.com/repos/IntellectualSites-Internal/plotsquared-github-action-demo/releases?draft=true | jq '.[0].id')
+          echo "Draft number: $DRAFT_NUMBER"
+      - name: Publish draft
+        if: ${{ env.DRAFT_NUMBER }} != null
+        run: |
+          curl -X PATCH https://api.github.com/repos/$GITHUB_REPOSITORY/releases/$DRAFT_NUMBER -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"draft":false}'
