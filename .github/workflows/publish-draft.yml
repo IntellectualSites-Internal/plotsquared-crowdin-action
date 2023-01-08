@@ -10,11 +10,18 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install jq
         run: sudo apt-get install -y jq
-      - name: Get latest draft
+      - name: Get latest release
         run: |
-          DRAFT_NUMBER=$(curl -s https://api.github.com/repos/IntellectualSites-Internal/plotsquared-github-action-demo/releases?draft=true | jq '.[0].id')
-          echo "Draft number: $DRAFT_NUMBER"
-      - name: Publish draft
-        if: ${{ env.DRAFT_NUMBER }} != null
+          RELEASE_ID=$(curl -s https://api.github.com/repos/IntellectualSites-Internal/plotsquared-github-action-demo/releases/latest | jq '.id')
+          echo "Release ID: $RELEASE_ID"
+      
+      # Check if the release is a draft
+      - name: Check draft status
+        if: ${{ env.RELEASE_ID }} != null
         run: |
-          curl -X PATCH https://api.github.com/repos/$GITHUB_REPOSITORY/releases/$DRAFT_NUMBER -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"draft":false}'
+          RELEASE_DRAFT=$(curl -s https://api.github.com/repos/IntellectualSites-Internal/plotsquared-github-action-demo/releases/$RELEASE_ID | jq '.draft')
+          echo "Release draft: $RELEASE_DRAFT"
+          if [ "$RELEASE_DRAFT" = "true" ]; then
+            echo "yay!"
+            exit 1
+          fi
